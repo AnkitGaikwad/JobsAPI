@@ -18,6 +18,17 @@ const getAllJobs = async (req, res) => {
     res.status(StatusCodes.OK).json({jobs, count: jobs.length});
 };
 
+    // if(req.get("Content-Type")!="application/json") { 
+    //     res.status(401).send("Invalid header format"); 
+    //     return;
+    // }
+    // try { 
+    //     validator.validate(req.body,itemSchema, {"throwError":true});
+    // } catch(err) { 
+    //     res.status(401).end("Invalid body format: " + err.message); 
+    //     return;
+    // }
+
 const createJob = async (req, res) => {
     req.body.createdBy = req.user.userId;
     const job = await Job.create(req.body);

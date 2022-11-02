@@ -1,22 +1,59 @@
+const Job = require('../models/Job');
+const {StatusCodes} = require('http-status-codes');
+const {BadRequestError, NotFoundError} = require('../errors');
+
 const getJob = async (req, res) => {
-    res.send("Getting all jobs...");
+    const {user: {userId}, params: {id: jobId}} = req;
+    const job = await Job.findOne({
+        _id: jobId, createdBy: userId
+    });
+    if (!job) {
+        throw new NotFoundError(`Job  not found with id ${jobId}`);
+    }
+    res.status(StatusCodes.OK).json({job});
 };
 
 const getAllJobs = async (req, res) => {
-    res.send("getting single job...");
+    const jobs = await Job.find({createdBy: req.user.userId}).sort('createdAt');
+    res.status(StatusCodes.OK).json({jobs, count: jobs.length});
 };
 
-// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MzYxMGY2NTg2MTNkMzdmZTNhNzA5ZTMiLCJuYW1lIjoiQW5raXRhIiwiaWF0IjoxNjY3MzA1MzE3LCJleHAiOjE2Njk4OTczMTd9.FsualWfZLeQkKB-AvPtr6hdka7_xLnlbPNhtI64oimU
 const createJob = async (req, res) => {
-    res.json(req.user);
+    req.body.createdBy = req.user.userId;
+    const job = await Job.create(req.body);
+    res.status(StatusCodes.CREATED).json({job});
 };
 
 const updateJob = async (req, res) => {
-    res.send("updating job");
+    const {
+        body: {company, position},
+        user: {userId}, 
+        params: {id: jobId}} = req;
+    if (company === "" || position === "") {
+        throw new BadRequestError("Company or position cannot be empty");
+    }
+    const job = await Job.findByIdAndUpdate(
+        {_id: jobId, createdBy: userId}, req.body, {new: true, runValidators: true}
+    );
+    if (!job) {
+        throw new NotFoundError(`Job  not found with id ${jobId}`);
+    }
+    res.status(StatusCodes.OK).json({job});
 };
 
 const deleteJob = async (req, res) => {
-    res.send("deleting job");
+    const {
+        body: {company, position},
+        user: {userId}, 
+        params: {id: jobId}} = req;
+    if (company === "" || position === "") {
+        throw new BadRequestError("Company or position cannot be empty");
+    }
+    const job = await Job.findByIdAndRemove({_id: jobId, createdBy: userId});
+    if (!job) {
+        throw new NotFoundError(`Job  not found with id ${jobId}`);
+    }
+    res.status(StatusCodes.OK).json({job});
 };
 
 module.exports = {
